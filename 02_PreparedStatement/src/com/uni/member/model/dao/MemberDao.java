@@ -2,6 +2,7 @@ package com.uni.member.model.dao;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -92,11 +93,11 @@ public class MemberDao {
 		Member m = null;
 		 Connection conn = null;
 	      
-	      Statement stmt = null; 
+	      PreparedStatement pstmt = null; 
 	      
 	      ResultSet rset = null; 
 	      
-	      String sql = "SELECT * FROM MEMBER WHERE USERID = '" + memberId +"'";
+	      String sql = "SELECT * FROM MEMBER WHERE USERID = ?"; //이곳을 ?로
 		
 	  	try {
 	         // 1. JDBC DRIVER 등록처리: 해당 DATABASE 벤더 사가 제공하는 클래스 동록
@@ -112,10 +113,10 @@ public class MemberDao {
 	         System.out.println("conn = "+conn ); //성공하면 connection정보, 실패하면 null값
 	         
 	         //3. 쿼리문을 실행할 statment 객체생성
-	         stmt = conn.createStatement();
-	         
+	         pstmt = conn.prepareStatement(sql);
+	         pstmt.setString(1, memberId);
 	         //4. 쿼리문을 전송, 실행결과를 ResultSet으로받기
-	         rset = stmt.executeQuery(sql);
+	         rset = pstmt.executeQuery();
 	        
 	         while(rset.next()) {
 	        	 m = new Member();
@@ -142,7 +143,7 @@ public class MemberDao {
 	      }finally {
 	    	  try {
 			  rset.close();		
-	    	  stmt.close();
+	    	  pstmt.close();
 	    	  conn.close();
 	    	  } catch (SQLException e) {
 					// TODO Auto-generated catch block
@@ -156,11 +157,11 @@ public class MemberDao {
 		List<Member> list =null;
 		 Connection conn = null;
 	      
-	      Statement stmt = null; 
+		 PreparedStatement pstmt = null; 
 	      
 	      ResultSet rset = null; 
 	      
-	      String sql = "SELECT * FROM MEMBER WHERE USERNAME = '" + memberName +"'";
+	      String sql = "SELECT * FROM MEMBER WHERE USERNAME LIKE ?";
 		
 	  	try {
 	         // 1. JDBC DRIVER 등록처리: 해당 DATABASE 벤더 사가 제공하는 클래스 동록
@@ -176,10 +177,12 @@ public class MemberDao {
 	         System.out.println("conn = "+conn ); //성공하면 connection정보, 실패하면 null값
 	         
 	         //3. 쿼리문을 실행할 statment 객체생성
-	         stmt = conn.createStatement();
-	         
+	         pstmt = conn.prepareStatement(sql);
+	         pstmt.setString(1, "%"+memberName+"%");
 	         //4. 쿼리문을 전송, 실행결과를 ResultSet으로받기
-	         rset = stmt.executeQuery(sql);
+	         rset = pstmt.executeQuery();
+	        
+	         
 	         //5 받은 결과값을 객체에 옮겨서 저장하기
 	         list = new ArrayList<Member>();         
 	         while(rset.next()) {
@@ -207,7 +210,7 @@ public class MemberDao {
 	      }finally {
 	    	  try {
 			  rset.close();		
-	    	  stmt.close();
+	    	  pstmt.close();
 	    	  conn.close();
 	    	  } catch (SQLException e) {
 					// TODO Auto-generated catch block
@@ -222,10 +225,10 @@ public class MemberDao {
 		int result = 0;
 		
 		Connection conn = null;	    
-		Statement stmt = null; 
+		PreparedStatement pstmt = null; 
 		
-		String sql = "INSERT INTO MEMBER VALUES("			 
-				 +"'"+m.getUserId() +"',"			
+		String sql = "INSERT INTO MEMBER VALUES(?,?,?,?,?,?,?,?,?,sysdate)";			 
+				/* +"'"+m.getUserId() +"',"			
 				 +"'"+m.getPassword()+"',"
 				 +"'"+m.getUserName()+"',"
 				 +"'"+m.getGender()+"',"
@@ -234,7 +237,7 @@ public class MemberDao {
 				 +"'"+m.getPhone()+"'," 
 				 +"'"+m.getAddress()+"',"
 				 +"'"+m.getHobby()+"',"
-				 +"sysdate)";
+				 +"sysdate)";*/
 		
 		   // 1. JDBC DRIVER 등록처리: 해당 DATABASE 벤더 사가 제공하는 클래스 동록
         try {
@@ -245,16 +248,30 @@ public class MemberDao {
         
         // 2.등록된 클래스를 이용해서 db연결
         // 드라이버타입@ip주소:포트번호:db이름(SID)
-        // orcl:사용자정의설치 , thin : 자동으로 설치 //ip주소 -> localhost 로 변경해도됨       
+        // oracle:사용자정의설치 , thin : 자동으로 설치 //ip주소 -> localhost 로 변경해도됨       
 			conn = DriverManager.getConnection("jdbc:oracle:thin:@127.0.0.1:1521:xe","STUDENT", "STUDENT");
 		
         // 127.0.0.1 로컬호스트 기본주소값 / 포트  1521:xe "STUDENT", "STUDENT" 은 sql에 있음
         System.out.println("conn = "+conn ); //성공하면 connection정보, 실패하면 null값
         
         //3. 쿼리문을 실행할 statment 객체생성
-        stmt = conn.createStatement();
+        pstmt = conn.prepareStatement(sql);
         conn.setAutoCommit(false);
-        result = stmt.executeUpdate(sql);//처리한 행의 갯수 리턴
+        
+        pstmt.setString(1, m.getUserId());
+        pstmt.setString(2, m.getPassword());
+        pstmt.setString(3, m.getUserName());
+        pstmt.setString(4, m.getGender());
+        pstmt.setInt(5, m.getAge());
+        pstmt.setString(6, m.getEmail());
+        pstmt.setString(7, m.getPhone());
+        pstmt.setString(8, m.getAddress());
+        pstmt.setString(9, m.getHobby());
+      
+        
+       
+        
+        result = pstmt.executeUpdate();//처리한 행의 갯수 리턴
         
         if(result > 0) conn.commit();
         else conn.rollback();
@@ -266,7 +283,7 @@ public class MemberDao {
 			e.printStackTrace();
 		}finally {
 			try {
-				stmt.close();
+				pstmt.close();
 				conn.close();
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
@@ -281,15 +298,10 @@ public class MemberDao {
 	public int updateMember(Member m) {
 		int result = 0;
 		
-		Connection conn = null;	    
-		Statement stmt = null; 
+		Connection conn = null;	     
+		PreparedStatement pstmt = null; 
 		
-		String sql = "UPDATE MEMBER SET"			 
-				 +" PASSWORD = '" + m.getPassword()+"' , "
-				 +" EMAIL = '" + m.getEmail()+"' , "
-				 +" PHONE = '" + m.getPhone()+"' , "
-				 +" ADDRESS = '" + m.getAddress()+"' "
-				 +" WHERE USERID = '" + m.getUserId()+"'";
+		String sql = "UPDATE MEMBER SET PASSWORD = ? , EMAIL = ? ,PHONE = ?,ADDRESS = ?  WHERE USERID = ?";
 		
 		   // 1. JDBC DRIVER 등록처리: 해당 DATABASE 벤더 사가 제공하는 클래스 동록
         try {
@@ -307,9 +319,16 @@ public class MemberDao {
         System.out.println("conn = "+conn ); //성공하면 connection정보, 실패하면 null값
         
         //3. 쿼리문을 실행할 statment 객체생성
-        stmt = conn.createStatement();
+        pstmt = conn.prepareStatement(sql);
         conn.setAutoCommit(false);
-        result = stmt.executeUpdate(sql);//처리한 행의 갯수 리턴
+        
+        pstmt.setString(1,m.getPassword() );
+        pstmt.setString(2,m.getEmail() );
+        pstmt.setString(3,m.getPhone() );
+        pstmt.setString(4,m.getAddress() );
+        pstmt.setString(5,m.getUserId() );
+        
+        result = pstmt.executeUpdate();//처리한 행의 갯수 리턴
         
         if(result > 0) conn.commit();
         else conn.rollback();
@@ -321,7 +340,7 @@ public class MemberDao {
 			e.printStackTrace();
 		}finally {
 			try {
-				stmt.close();
+				pstmt.close();
 				conn.close();
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
@@ -336,11 +355,11 @@ public class MemberDao {
 		int result = 0;
 		 Connection conn = null;
 	      
-	      Statement stmt = null; 
+	      PreparedStatement pstmt = null; 
 	      
 	    
 		
-	      String sql = "DELETE FROM MEMBER WHERE USERID = '" + memberId + "'";
+	      String sql = "DELETE FROM MEMBER WHERE USERID = ?";
 		
 		try {
 	         // 1. JDBC DRIVER 등록처리: 해당 DATABASE 벤더 사가 제공하는 클래스 동록
@@ -356,13 +375,11 @@ public class MemberDao {
 	         System.out.println("conn = "+conn ); //성공하면 connection정보, 실패하면 null값
 	         
 	         //3. 쿼리문을 실행할 statment 객체생성
-	         stmt = conn.createStatement();
-	         
-	       
-	         //3. 쿼리문을 실행할 statment 객체생성
-	         stmt = conn.createStatement();
+	         pstmt = conn.prepareStatement(sql);	               
 	         conn.setAutoCommit(false);
-	         result = stmt.executeUpdate(sql);//처리한 행의 갯수 리턴
+	         
+	      pstmt.setString(1, memberId);
+	         result = pstmt.executeUpdate();//처리한 행의 갯수 리턴
 	         
 	         if(result > 0) conn.commit();
 	         else conn.rollback();
@@ -374,7 +391,7 @@ public class MemberDao {
 	 			e.printStackTrace();
 	 		}finally {
 	 			try {
-	 				stmt.close();
+	 				pstmt.close();
 	 				conn.close();
 	 			} catch (SQLException e) {
 	 				// TODO Auto-generated catch block
